@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contractor Analysis & Strategy</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
+  #root { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+  textarea, input, select, button { font-family: inherit; }
+  textarea:focus, input:focus { outline: 2px solid #1D9E75; outline-offset: 1px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px !important; }
+  table { border-collapse: collapse; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f0efe8; }
+  ::-webkit-scrollbar-thumb { background: #c8c7c0; border-radius: 3px; }
+  @media (max-width: 600px) {
+    #root { padding: 12px 10px 32px; }
+    .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+    .filter-row { flex-direction: column !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const G="#1D9E75",GL="#E1F5EE",B="#185FA5",BL="#E6F1FB",AM="#BA7517",AL="#FAEEDA",R="#A32D2D",RL="#FCEBEB";
+const PALETTE=[
+  {bg:"#E6F1FB",text:"#0C447C",border:"#378ADD"},{bg:"#E1F5EE",text:"#085041",border:"#1D9E75"},
+  {bg:"#EEEDFE",text:"#3C3489",border:"#7F77DD"},{bg:"#FAEEDA",text:"#633806",border:"#EF9F27"},
+  {bg:"#FBEAF0",text:"#72243E",border:"#D4537E"},{bg:"#EAF3DE",text:"#27500A",border:"#639922"},
+  {bg:"#FAECE7",text:"#4A1B0C",border:"#D85A30"},{bg:"#F1EFE8",text:"#2C2C2A",border:"#888780"},
+  {bg:"#FCEBEB",text:"#501313",border:"#E24B4A"},{bg:"#E6F1FB",text:"#185FA5",border:"#85B7EB"},
+  {bg:"#FBEAF0",text:"#993556",border:"#ED93B1"},{bg:"#EAF3DE",text:"#3B6D11",border:"#97C459"},
+];
+
+const RAW=[
+  {name:"A'Ja Prejean",email:"aprejean1997@gmail.com",bio:"M.A. in Africana Studies",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"A. UMA MAHESWARI",email:"umasiva_us@yahoo.co.in",bio:"PhD in Psychology, MBA, PGDCP, PGDPR, B.Ed.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Aarish Khan",email:"aarishkhan26@gmail.com",bio:"MSc Hospitality Administration. Curriculum design, instructional development, assessment design. 4 years teaching hospitality and tourism.",qa:"2/18: Logged time correctly",active:"Hospitality 105",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Alexandra Mairs-Kessler",email:"amairskessler@gmail.com",bio:"Ph.D. in History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Alvin Mar Martin",email:"alvinmarvmartin@gmail.com",bio:"Master of Science in Chemical Engineering. 2 years instructing Chemistry for Engineers and Biochemistry.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Andrew Geddie",email:"andrewg@geddev.com",bio:"Taught Strategic Financial Management, Marketing Management, Project Management, Organizational Change for 18 years. Master's in Business Leadership.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Andrew Israelsen",email:"andrew.israelsen@protonmail.com",bio:"B.A. in History, M.A. in Philosophy, PhD in Philosophy",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Antonio J. Smith",email:"smithjermaine26@yahoo.com",bio:"Curriculum and Instruction, American History, Secondary Education (Social Studies)",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Aranzazu Hubbard",email:"armn91@yahoo.com",bio:"PhD Spanish Education, PhD Applied Economics, Masters in teaching Spanish as a Second Language",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Ariel Rica",email:"arielrvrica@gmail.com",bio:"Bachelors in Chemical Engineering, Masters in Biochemistry, 5 years teaching college chemistry courses",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Arlee John Lunario",email:"rhbw112343@gmail.com",bio:"Master's in Social Science; PhD in Political Science. Forensic science, criminal justice.",qa:"3/13: Billing is within time. 2/27: Billed time correctly",active:"Criminal Justice 106",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"ARPAN HERBERT",email:"arpanherbert@gmail.com",bio:"PhD Environmental Engineering",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Asha Suresh",email:"ashaprasanthpk@gmail.com",bio:"MCA and BSc Computer Science. 10 years in curriculum design for Computer Science, Data Science, Web Development, AI, Cloud Computing.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Ashley Minter",email:"ANM5@pct.edu",bio:"M.S. Human Behavior",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Blake Grindon",email:"bgrindon@alumni.princeton.edu",bio:"PhD in History",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Chandra Waller",email:"c.ely@wingate.edu",bio:"BA in History and Sociology, MA in History, MAT in Education, PhD in History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Charles Toussaint",email:"crtoussaintjr@icloud.com",bio:"M.Ed. Curriculum and Instruction, M.Ed. Special Education, pursuing PhD in Special Education",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Cheyenne Johnson",email:"cheymjohns@gmail.com",bio:"MA and BA in History. Former Social Studies and English Language Arts curriculum lead. Current History faculty.",qa:"2/12/26: Billing times present and within range.",active:"History 106: The Civil War & Reconstruction",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"Christianlly Cena",email:"christianlly.cena2017@gmail.com",bio:"Master of Science in Physics",qa:"3/13: Billing times looked good. 2/25: Billed time correctly",active:"Physics 111: Physics I",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Christina Nadar",email:"nadar789@gmail.com",bio:"M.A. in Philosophy",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Christopher Sabanal",email:"cdsabanal@gmail.com",bio:"PhD in World Christianity, advanced degrees in theology and philosophy. 6 years teaching theology and world religion.",qa:"3/13: No recent work",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Craig Brasmer",email:"cbrasmer@live.com",bio:"MCSE, PMI, Professional Technical Writing. 15 years Business Acumen, 7 years Fortune 100 Technical Writer.",qa:"",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"Cydnee Melville",email:"cheerfulchewy@gmail.com",bio:"Masters of Arts in History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Cynthia Talens",email:"sintiatalens0822@gmail.com",bio:"Doctor of Education in Curriculum and Instruction. 20+ years teaching Chemistry and other science courses.",qa:"2/9: Logged time appropriately",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Daniel Codoluto",email:"daniel.codoluto@outlook.com",bio:"Master's in Physics, Minor in Astrophysics. College-level teaching assistant, 4 years with Study.com.",qa:"(3/6/26, CJA, 5) Responsive in communication; submits work on time. 3/13: Billing within range.",active:"Physics 112: Physics II",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"Daniela Tilley",email:"cngbows@yahoo.com",bio:"Master's in Spanish, Master's in Social Studies and Education, Doctorate in Curriculum and Instruction",qa:"",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"David Favela",email:"dcfavela1@buffs.wtamu.edu",bio:"Ed.D in Educational Leadership",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Dawn Burke",email:"dawnbrown6610@gmail.com",bio:"M.S. in Psychology",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Demetris Carr",email:"DemetrisCarr3@gmail.com",bio:"MBA",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Dharan Bharti",email:"danimaker13@gmail.com",bio:"MSc in Work, Organizational and Personnel Psychology",qa:"3/13: Billing looks good.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Diego Queiroz",email:"diego.veras@gmail.com",bio:"Dual PhD in Computer Engineering. Computer networks, scripting, DevOps, Linux, information security.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Ditya Singh",email:"dityarg123@gmail.com",bio:"Masters of Arts in Geography",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Earl G. Asuncion",email:"earlasuncion@gmail.com",bio:"Masters in Science Education. 12 years instructing college science and mathematics.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Emily Beatty",email:"ebeatty3@uoregon.edu",bio:"M.S. in Political Science, completing PhD in Political Science",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Fatima Gilani",email:"gilanisyedafatima@gmail.com",bio:"Post Graduate Diploma in Business Administration (PGDBA); Master's Degree in Economics. Academic background in economics, management, data analysis.",qa:"",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Ferdinand Banggiacan",email:"fjbanggiacan@gmail.com",bio:"Philosophy and theology. Behavioral Skills and Resilience. Ongoing MA in Human Resource Development.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Geffrey Bibon",email:"bibongeffrey@gmail.com",bio:"Licensed Chemist. Bachelor's in Chemistry. 1 year teaching General, Analytical, and Organic Chemistry remotely.",qa:"",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Gregg Lightfoot",email:"gtl7@cornell.edu",bio:"PhD, MA in History; MA in Education",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Huma Khan",email:"huma.k301600@gmail.com",bio:"M.Sc. in Organic Chemistry. 5+ years as Chemistry Subject Matter Expert in K-12 and undergraduate instruction.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Jalpa Thakkar",email:"jpthakkar6@gmail.com",bio:"Ph.D. in Management, MBA, 10 years instructing college courses in Finance and Accounting",qa:"3/13: Billing looks good.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Jason Locke",email:"Jason.Locke@outlook.com",bio:"PhD in History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Joemar Sedeno",email:"joemar.sedeno@parsu.edu.ph",bio:"Masters of Science in Civil Engineering with Specialization in Geotechnical Engineering",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Jose Jacobo",email:"jose1aztk@gmail.com",bio:"PhD in Hispanic Studies",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Kathryn Boddie",email:"kathryn.a.boddie@gmail.com",bio:"Math; PhD in Applied Mathematics",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Kristen Bailey",email:"klwilkes@mix.wvu.edu",bio:"PhD 19th Century History",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Kumar Siddhant",email:"kumarbsingh2@gmail.com",bio:"Masters in Geography, 6 years of teaching and curriculum development experience",qa:"(3/6/26: KC, 4) Struggles a bit with the course outline, but responds in a timely manner.",active:"Geography 101: Human & Cultural Geography",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Lipika Bid",email:"lipikabid.lb@gmail.com",bio:"Masters in Applied Geology, 7 years working with School and College Courses",qa:"",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Madhushree P",email:"madhushreepilikudlu@gmail.com",bio:"Ph.D. scholar in Physics at Central University of Tamil Nadu. M.Sc. in Physics. CSIR-UGC NET (JRF) qualifier. 4 years undergraduate teaching and academic content development.",qa:"3/13: Billing looks good.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Maria Kathryna Denaga",email:"kathrynadenaga@gmail.com",bio:"Master's in business administration (student), Former Academic Researcher (2 years)",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Mariyam Firoz Siddiqui",email:"mariyam7798@gmail.com",bio:"Masters in Geology. CSIR NET-UGC Lectureship 2020 AIR-20 holder. Experience as adjunct faculty in Engineering College and Content Writer.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Melissa D Hughes",email:"melissa@goathousefarm.com",bio:"PhD ABD History, MA Digital Humanities, MA Sociology",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Minal Londhe",email:"1995minal9@gmail.com",bio:"Masters in Geology, 4 years as a working professional",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Morgan Lieske",email:"morganelieske@gmail.com",bio:"MEd in Curriculum and Instruction and BA in Secondary Education and History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Nathan C. Jones",email:"ncjones@determinarisolutions.com",bio:"Ph.D in History and Sociology, MA in History, Graduate Certificate in Museum Studies",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Nimrah Sayani",email:"nimrah.sayani1@gmail.com",bio:"Master's Degree in Law. Curriculum Developer in Artificial Intelligence and Law. Master's in Intellectual Property Rights and Technology Laws. 6 years in ed-tech industry.",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Nisha P Sensharma",email:"nisensharma@gmail.com",bio:"PhD Environmental Design and Planning, Teaching Certification in Secondary Social Studies",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Patricia Nunally",email:"patricianunally@gmail.com",bio:"PhD/ABD in Instructional Design and Technology, M.A. in Criminal Justice and Special Education, Graduate Certificates, and B.S. in Psychology",qa:"2/24/26: No billing issues",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"Paul Keenan Butt",email:"paulkeenanbutt1808@gmail.com",bio:"Senior High School and College Science instructor 10+ years. Bachelor of Secondary Education major in Physics. MS Physics candidate at De La Salle University.",qa:"3/13: Billing looks good.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Pradnya Wakle",email:"p.p.wakale@gmail.com",bio:"Master's degree in Child Psychology. Advanced training in learning theory, assessment, and learner-centered instructional design. 12 years developing and reviewing K-12 and college-level educational content.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Rafiqah Mustafaa",email:"rafiqah.mustafaa@gmail.com",bio:"PhD and EdM in educational policy studies (sociology concentration), B.A. political science, B.A. sociology",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"RANJIT PRATAP",email:"ranjit.prataphistory@gmail.com",bio:"Ph.D. in History",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Renz Einan Mangaran",email:"mangaranrenz@gmail.com",bio:"Master's-level training in Clinical Psychology. Licensed Psychometrician. Experience in psychological assessment, test development, and review of learning outcomes.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:false},
+  {name:"Rosanne Ussery",email:"rkussery@gmail.com",bio:"MFA Creative Writing, BA/BS Psychology and Social Sciences",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Sandhya rani singh",email:"sandhyaranisingh1071@gmail.com",bio:"PhD in Psychology, 3 years Research Experience",qa:"",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Sasha Johnson",email:"drsashajohnson@gmail.com",bio:"MS in Clinical Mental Health Counseling, PhD in General Psychology",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Shane Beener",email:"Shane.Beener@gmail.com",bio:"MS Leadership and Human Resource Development, MEd. Secondary Education",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"SHIKHA SONI",email:"shikhagoel68@gmail.com",bio:"Masters in Chemistry (Hons.) with 8+ years experience in content development, editing and reviewing.",qa:"",active:"",residency:"",wage:"Hourly",flagged:false,cms:false},
+  {name:"Tara Allen",email:"taraallen@suumail.net",bio:"Masters in Educational Tech and Instructional Design",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Varsha Mishra",email:"varshamishraji656543@gmail.com",bio:"MA Philosophy (University of Delhi). BA Philosophy. Certified course creator in Instructional Design. 200+ lessons and assessments at college level. Guest lectured on ethics and Indian aesthetics.",qa:"3/13: No recent work",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Vincent Apodaca",email:"v.apodaca@outlook.com",bio:"Computer Science M.S. from Lamar University. CS instructor and tutor. 30 years software engineering experience across Fortune 100 companies.",qa:"",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:false},
+  {name:"Zylia Knowlin",email:"zsoftleigh@aol.com",bio:"PhD in Education",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  {name:"Irina Ottley",email:"irina.ottley910@gmail.com",bio:"Masters in Education",qa:"",active:"",residency:"",wage:"Per Piece",flagged:false,cms:false},
+  // BACKUP
+  {name:"Aaron Samaroo",email:"Asamaroo1@gmail.com",bio:"Bachelor's in Technology Education, Master's in TESOL. Microsoft, Adobe certifications. 10+ years CTE educator and curriculum designer.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Abram Patiño",email:"patinoabram@gmail.com",bio:"Bachelor of Industrial Technology (Computer Technology). IT support, network management, troubleshooting.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Adam Deaton",email:"adeaton529@gmail.com",bio:"Mathematics Instructor, 7 years Private Math Tutor. Bachelor's in Pure Math, Master's in Math from Texas A&M.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Adolfo Martin Soliman",email:"martinsoliman03@gmail.com",bio:"Degree in Mathematics. 5 years teaching college mathematics, statistics, research writing.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Afridi Ahmed",email:"afridiahmed423@gmail.com",bio:"Master of Science in Geology, Bachelor of Science in Biology.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Allyza Mae Martin",email:"Allyzamartin14@gmail.com",bio:"Taught Biology and General Science for 11 years. Master of Science in Teaching Biology.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Alysia Gruenstern",email:"A.gruenstern@gmail.com",bio:"Behavioral psychologist with background in psychology, education, and mental health. 10+ years curriculum development.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Ananya Sharma",email:"ananyaa240103@gmail.com",bio:"Philosophy major, graduate studies from University of Delhi. Content writer 3+ years. Private tutor 2+ years.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Angel Parks",email:"Aparks10uga@gmail.com",bio:"Teaches Health and Physical Education 20+ years. B.S.Ed. Health & Physical Education, M.Ed. Educational Psychology, Ed.D.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Anna Champagne",email:"parksfreelancing@yahoo.com",bio:"Writer and editor with 20+ years in educational publishing.",qa:"2/13/26: No billing issues",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Anna Singh",email:"acsingh437@gmail.com",bio:"B.S. Biological Sciences, M.S. Biomedical Sciences, M.S. Dental Sciences. 5 years tutoring, 2 years college teaching biology and anatomy.",qa:"(02/13/26, CJA, 4) Strong subject knowledge, clear organization, effective use of visuals.",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Anne Hilscher",email:"amhilscher@gmail.com",bio:"Former Biology Lecturer and Reference Librarian. Teaching, Research, Academic Writing.",qa:"2/13/26: No billing issues",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Archie French",email:"archief2016@gmail.com",bio:"MA in Education (TESOL). Internationally Certified Learning and Development Professional. 9 years teaching English and language acquisition.",qa:"2/13/26: No billing issues. (9/19/2025, CJA, 5) Accurately identifies core concepts, constructive organized feedback.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Ashish Soni",email:"ashish.soni2000@outlook.com",bio:"M.Res Paleontology (University of Edinburgh), B.Sc Geology. Research, lab, and fieldwork experience.",qa:"2/10/28: Billing time are a bit over.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Ashley Stengel",email:"ashsten@gmail.com",bio:"Ph.D. Complex Biosystems, B.Sc Biology. 8+ years teaching. Biological sciences, microbiology, ecology, environment.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Aubrey Scruggs",email:"aubrey1scruggs@gmail.com",bio:"Master's in Journalism, Bachelor's in Media Studies and Computer Science. 11 years copywriting and IT.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Ayesha Asif",email:"ayesha.asif95@gmail.com",bio:"BSc Social Sciences (Sociology). 7+ years as curriculum development manager and teacher trainer. Experience in Mathematics Grade 1-8.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Azur Peraz",email:"azur.peraz@gmail.com",bio:"Bachelor's in secondary education specializing in history. 20+ years teaching. US Common Core, AP, Cambridge IGCSE, IB curricula.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Bahiya Cabral-Johnson",email:"bcabraljohnson@gmail.com",bio:"M.S. Sociology, M.S. Education. TESOL certificate. Taught ESL, Sociology, Social Science, Psychology, English Composition at community college.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Beatrice Nadine De Galicia",email:"beanadinedg@gmail.com",bio:"IT Support Specialist 10+ years. Enterprise systems, CRM, MIS, Microsoft 365, Windows, SharePoint, Teams.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Becky Suhr Ferguson",email:"rpferguson29@gmail.com",bio:"Master's degree in History.",qa:"2/12/26: No issues found.",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Ben Stanisclasse",email:"benstanisclasse@gmail.com",bio:"Completing BS in Information Technology. CompTIA A+ and Network+ certified, MCSE and MCSA. 8+ years IT systems administration and cybersecurity.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Benjamin Mateo",email:"benjzayb@gmail.com",bio:"Psychology and Creative Writing graduate. Learning Designer, Curriculum Reviewer, Trainer.",qa:"2/12/26: Nothing billed",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Brad Hutcheson",email:"bhutcheson74@gmail.com",bio:"BA History and Religion, MA History. Taught US History, World History, Human Geography for 15 years.",qa:"3/13: No recent work",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Brandon Radoman Shaw",email:"brandonradomanshaw@gmail.com",bio:"PhD Geological Sciences",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Brooke Holt",email:"brookeholt02@gmail.com",bio:"B.A. Biology (Texas A&M). Credentialed copyeditor, 10 years editing academic copy.",qa:"(9/19/2025, CJA, 5) Strong attention to detail. Clear, actionable feedback on key terms, formatting, and factual accuracy.",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Bryan Kennedy",email:"bryankennedy.rn@gmail.com",bio:"Master of Science in Nursing, BSN Clemson University, BA in Psychology. Board certified Nurse Executive.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Chad Rimbey",email:"teacherchad4cambly@gmail.com",bio:"Taught EAL and History 10+ years. M.A. History, M.S.Ed. Applied Linguistics.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Chetara Lee",email:"chetaralee@gmail.com",bio:"MBA, PhD in Leadership with a concentration in Business Administration",qa:"2/24/26: No billing issues",active:"Business 306: Strategic Human Resources Management",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Cynthia Moore",email:"ceemo866@gmail.com",bio:"MBA with Emphasis in Accounting",qa:"(3/6/26: KC, 4) Seems to be doing their work in a timely and effective manner.",active:"Accounting 301: Applied Managerial Accounting",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Daisy Dolor",email:"nikki812008@gmail.com",bio:"Bachelor of Science in Mathematics (Teaching). Extensive experience teaching mathematics in Philippines, Nevada, and Kansas. Taught Algebra 1, College Prep Math.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Joan Michelle A. Embarca",email:"jomitch201986@gmail.com",bio:"Bachelor of Secondary Education major in Mathematics, Master of Arts in Education major in Mathematics. 13 years teaching experience in Philippines and USA. Teaching certification in Florida.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Keisha Therese Rigos",email:"katiefr2326@gmail.com",bio:"Mathematics graduate. Coursework in Elementary Statistics, Mathematical Statistics, Probability Theory, Numerical Analysis, Differential Equations, Advanced Calculus, Linear Algebra, Matrix Theory.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Lauren Judge",email:"lkjudge831@gmail.com",bio:"School Psychologist",qa:"2/13/26: No billing issues (9/5/2025, CJA, 5) Lauren provided clear, actionable feedback across three lessons, consistently catching issues with sources, formatting, and key term bolding.",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Maria Theresa Fernandez",email:"doc.chofernandez@gmail.com",bio:"PhD Education Management",qa:"2/13/26: No billing issues (9/18/2025, CJA, 5) Consistently demonstrates a strong grasp of project guidelines. Organized, professional, and constructive feedback.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Michael Moeller",email:"michael.m.moeller@gmail.com",bio:"Doctorate in History of Consciousness (UC Santa Cruz). MA in Cultural Studies, BA in Literature. Designed and taught undergraduate courses on Literature, History, Philosophy, and Film Theory.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Michelle Washmuth",email:"michellewashmuth@gmail.com",bio:"MBA in Marketing from Regis University, BA in Journalism. 10+ years in content production. Communications Instructor in higher education.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Mike Angel Renon",email:"mikirenon10@gmail.com",bio:"Master's degree in Science Teaching Major in Chemistry from De La Salle University. BS in Biochemistry. Taught College Science and General Education courses.",qa:"2/10/26: Billing times looked good. (10/23/2025, CJA, 5) Clear, constructive, actionable feedback on content accuracy and question quality.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Mike Nieradko",email:"mnieradk3@gmail.com",bio:"PhD in Chemistry with over 10 years of teaching and tutoring experience in Math, Chemistry, and other sciences.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Nikita Jain",email:"nikitaj102@gmail.com",bio:"Doctoral Scholar in Accounts and Finance (University of Delhi). MCom and BCom from DU. 6 years experience in finance. Certified in Excel, Tally AR/AP, UGC NET.",qa:"2/10/26: Only 3 intervals but they looked good.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Odalys Pacheco",email:"odalys.pacheco15@outlook.com",bio:"Bachelor's in Education and Technology, Master's in Instructional Technology and Design, Master's in Linguistics and Spanish as a Foreign Language. 5+ years teaching Spanish.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Paolo Iyulores",email:"paoloiyulores@yahoo.com.ph",bio:"Undergraduate and Graduate degrees in Applied Mathematics (Ateneo de Manila University). Mathematics Content Developer 4.5 years. JHS Math Teacher 3 years.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Pedro Prestes",email:"pedro.g.m.prestes@protonmail.com",bio:"B.A. in Mechanical Engineering. 5+ years experience in content editing, translation, and academic research.",qa:"2/12/26: No recent bills, but no billing issues",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Peter Crain",email:"pete.crain89@gmail.com",bio:"Franchise and business consultant. MBA in Pharmaceutical and Healthcare Business. Bachelor of Music.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Prince Solmer Sabusap",email:"freelancesirprince@gmail.com",bio:"Bachelor of Secondary Education major in Mathematics. 3+ years teaching college mathematics and creating instructional materials.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Rahul Pandey",email:"rahulpy164@gmail.com",bio:"Electrical Engineer specializing in Communication Engineering from IIT Bombay. 9+ years in technology-based education. Machine learning projects, computer science and digital learning.",qa:"(11/28/2025, CJA, 4) Comprehensive lesson that fully met the stated objective.",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Rajaram Kharade",email:"rajukharade99@gmail.com",bio:"Commerce professional 15+ years in Accounting, Costing, Taxation, and Financial Analysis. M.Com and M.Phil.",qa:"",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Ray Carlo Abacan",email:"raycarlo@yahoo.com",bio:"Doctor of Education in Educational Leadership and Management. 15+ years in instructional design, curriculum development, and technical training. CISCO Certified Academy Instructor.",qa:"2/13/26: No billing issues (9/18/2025, CJA, 5) Thorough and constructive feedback on question batches.",active:"",residency:"International",wage:"Hourly",flagged:false,cms:true},
+  {name:"Ruby Casaberde",email:"rubycasaberde56@gmail.com",bio:"Bachelor of Science in Computer Engineering. 3+ years in technical support and IT education. Tutored students in programming and networking.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Sara Helmes",email:"carhart.sara@gmail.com",bio:"Seasoned educator with special expertise in math instruction, coaching and intervention",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Sara Matherne",email:"saramatherne@gmail.com",bio:"Taught grades 3-8 ELA, Math, Science, and Social Studies 15+ years. Master's Degree in Education. Texas teaching license grades 4-8.",qa:"(1/26/2026, CJA, 5) Well aligned, accurate, well-structured lessons consistently.",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"shyama sharma",email:"shyamasharma1702@gmail.com",bio:"Master's degree in Philosophy from the University of Delhi. Writes college-level Philosophy lessons for Study.com.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Simon Escalada-Mastick",email:"sjemastick@gmail.com",bio:"Degrees in Spanish Linguistics. Currently completing degree in Mathematics from Southern New Hampshire University. 18 years mathematics teaching, 10 years computer science education.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Shivam Tiwari",email:"tiwarishivam180@gmail.com",bio:"M.Sc. Tech in Applied Geology from IIT (ISM) Dhanbad. UGC-CSIR NET JRF certification. 4+ years science content expertise.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Socorro Garza",email:"garza0526@gmail.com",bio:"B.S. in Business Management from Western Governors University. Certificate in Instructional Design from UC Irvine. 15+ years designing online courses and instructor-led training.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Stephen Molchan",email:"smolchan@ttu.edu",bio:"Taught accounting, business and financial planning courses at undergraduate and graduate levels 4+ years. BS in Accounting, MS in Taxation. Enrolled Agent and Accredited Financial Counselor.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Suzanne Albanese",email:"suzanne.albanese@gmail.com",bio:"Taught Spanish since 1998. BA in Spanish from Virginia Tech, MBA from Averett University. North Carolina Spanish K-12 teaching license. Taught Spanish and ESL at community college.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Tara Vasiliou",email:"taravasiliou@gmail.com",bio:"Massachusetts DESE certified teacher. 20 years web development experience. Master of Library and Information Studies in Digital Media. HTML, CSS, JavaScript, PHP, and SQL expertise.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Taylor Wascovich",email:"taylornwascovich@gmail.com",bio:"Mixed Methods Market Research Analyst in higher education. Bachelor's in Economics from Indiana University of Pennsylvania.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Teodolfo Lavandero Jr",email:"buboyzlavandero@yahoo.com",bio:"30+ years in IT leadership, security, and operations. VP and Head of IT. B.S. in Mathematics from University of the Philippines.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Thomas Sullivan",email:"tmpsull@gmail.com",bio:"Bachelor's in History (Vanderbilt University), Master's in Economics (Washington State University). 10 years editing academic content in History and Social Science.",qa:"2/10/26: No recent work",active:"",residency:"Domestic",wage:"Hourly",flagged:false,cms:true},
+  {name:"Timothy Phillips",email:"phillips@swcciowa.edu",bio:"MA in History (University of Northern Iowa), MA in Political Science. Teaching History and Political Science at Southwestern Community College since 2017.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Tori Green",email:"tsgreen06@gmail.com",bio:"Certified math teacher. Nearly two decades teaching mathematics at middle and high school level. B.B.A. in Finance, M.Ed in Curriculum Instruction and Assessment.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Trisha Lopena",email:"tmlopena@gmail.com",bio:"BS in Computer Science from University of the Philippines. Master's in Environment and Natural Resources Management. 8+ years as researcher in scientific research and development.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"VIPIN GOVIND A",email:"vipinaoh1@gmail.com",bio:"Integrated Master's in Applied Geology, PhD thesis in Earth Sciences at Pondicherry University. 7+ years specializing in isotope geochemistry and advanced lab techniques.",qa:"",active:"",residency:"International",wage:"Per Piece",flagged:false,cms:true},
+  {name:"William Anderson",email:"william88anderson@gmail.com",bio:"MBA from Centenary University, B.A. in Finance from Bowling Green State University. Certified educator 15+ years developing economics lessons.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+  {name:"Yvanna Hammen-Alvarez",email:"hammeny@gmail.com",bio:"B.A. in English-Creative Writing, M.S. in Clinical Mental Health Counseling, Certification in Analysis of Criminal Behavior. Psychology Lesson Writer for Study.com.",qa:"",active:"",residency:"Domestic",wage:"Per Piece",flagged:false,cms:true},
+];
+
+function isGoodQA(n){
+  if(!n)return false;const s=n.toLowerCase();
+  const bad=["do not add","warning","difficult","pushy","ai issues","sent a warning","removed from","unable to resolve","rewrote","flag","suspicious"];
+  const good=["good work","great work","reliable","strong","accurate","excellent","billed time correctly","billing is within time","billing looks good","no billing issues","logged time correctly","constructive","organized","5)","4)","3)","attention to detail","responsive"];
+  return good.some(p=>s.includes(p))&&!bad.some(p=>s.includes(p));
+}
+function extractSpecialty(bio){
+  const tags=new Set();const b=(bio||"").toLowerCase();
+  [["Mathematics",["math","statistics","calculus","algebra","geometry","quantitative","numerical analysis","differential equation","linear algebra"]],
+   ["Computer Science",["computer science","software","programming","it support","information technology","web development","coding","data science","machine learning","network","cybersecurity","devops","linux","cloud computing","java","sql","computer engineering"]],
+   ["Biological Sciences",["biolog","biochem","microbiol","physiology","ecology","anatomy","genetics","nursing","biomedical","paleontol","geology","earth science","environmental","geotechnical","geochemistry"]],
+   ["Physical Sciences",["physics","astrophysic","chemistry","chemical engineering","mechanical engineering"]],
+   ["Business",["business","finance","management","marketing","economics","accounting","entrepreneurship","mba","commerce","organizational","taxation","financial analysis","costing"]],
+   ["Humanities",["history","philosophy","literature","africana","spanish","language","humanities","theology","world christianity","religion","art history","social studies","hispanic","aesthetics","ethics"]],
+   ["Social Sciences",["social science","psychology","sociology","political","forensic","criminal justice","counseling","anthropology","human behavior","social work","geography","criminology","mental health counseling"]],
+   ["Education",["education","curriculum","instructional","teaching","pedagog","tesol","esol","esl","teacher training","learning design","instructional design","special education"]],
+   ["Communications",["communicat","journalism","media","technical writing","public relations","creative writing","copywriting"]],
+   ["Health Sciences",["nursing","health","physical education","dental","mental health","clinical","psychometr"]],
+   ["Hospitality",["hospitality","tourism","travel"]],
+   ["Law",["law","legal","intellectual property","legislation","compliance","llb"]],
+  ].forEach(([tag,kws])=>{if(kws.some(k=>b.includes(k)))tags.add(tag);});
+  return [...tags];
+}
+function courseMatches(course,specialties){
+  const c=course.toLowerCase();const sp=specialties.map(x=>x.toLowerCase());
+  const m=[
+    [["math","algebra","calculus","statistics","geometry","quantitative","numerical","linear algebra","differential eq"],["mathematics"]],
+    [["computer","programming","software","coding","it ","information technology","cybersecurity","network","data science","web dev","cloud","devops","linux","java","sql","database"],["computer science"]],
+    [["biolog","biochem","microbiol","ecology","anatomy","genetics","life science","geology","earth science","paleontol","geotechnical","environmental science","geochemistry"],["biological sciences"]],
+    [["physics","chemistry","chemical","astrophysic","mechanical","physical science"],["physical sciences"]],
+    [["business","finance","management","marketing","economics","accounting","entrepreneurship","taxation","organizational","human resource"],["business"]],
+    [["history","philosophy","literature","english","humanities","world religion","theology","art history","music","spanish","language arts","africana","ethics","aesthetics","hispanic"],["humanities"]],
+    [["psychology","sociology","political","criminal justice","forensic","social science","counseling","geography","anthropology","criminolog"],["social sciences"]],
+    [["education","curriculum","instructional","teaching","pedagog","tesol","esl","special education","literacy"],["education"]],
+    [["communication","journalism","media","writing","public relations","technical writing","broadcast","rhetoric"],["communications"]],
+    [["health","nursing","physical education","dental","mental health","clinical psychology","health science"],["health sciences"]],
+    [["hospitality","tourism","travel","hotel"],["hospitality"]],
+    [["law","legal","intellectual property","legislation","jurisprudence"],["law"]],
+  ];
+  return m.some(([kws,req])=>kws.some(k=>c.includes(k))&&req.some(r=>sp.includes(r)))||sp.some(s=>c.includes(s.split(" ")[0])||s.includes(c.split(" ")[0]));
+}
+function scoreFit(course,c){
+  if(!courseMatches(course,c.specialties))return -1;
+  const b=(c.bio||"").toLowerCase();
+  const stopWords=new Set(["introduction","principles","fundamentals","concepts","survey","applied","college","advanced","basic","general","level","and","the","to","of","in","for","with"]);
+  const kws=course.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/).filter(w=>w.length>3&&!stopWords.has(w));
+  let score=10+kws.reduce((a,k)=>a+(b.includes(k)?5:0),0);
+  score+=c.specialties.filter(sp=>courseMatches(course,[sp])).length>1?3:0;
+  if(c.goodQA)score+=4;
+  if(!c.active)score+=2;
+  if(c.bio&&c.bio.length>40)score+=2;
+  return score;
+}
+function parseCourses(text){
+  return text.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+}
+const LOW=2;
+const STATUS_CONFIG={
+  critical:{label:"No contractors",bg:"#F7C1C1",color:"#A32D2D",border:"#A32D2D",action:"Open applications urgently"},
+  low:{label:"Low coverage",bg:"#FAC775",color:"#BA7517",border:"#BA7517",action:"Open applications"},
+  moderate:{label:"Moderate",bg:"#FAEEDA",color:"#BA7517",border:"#EF9F27",action:"Monitor closely"},
+  good:{label:"Good",bg:"#E1F5EE",color:"#1D9E75",border:"#1D9E75",action:"No action needed"},
+};
+function getCoverageStatus(n){return n===0?"critical":n<=LOW?"low":n<=4?"moderate":"good";}
+
+function App(){
+  const [courseText,setCourseText]=useState("");
+  const [result,setResult]=useState(null);
+  const [activeView,setActiveView]=useState("courses");
+  const [filterType,setFilterType]=useState("all");
+  const [filterCourse,setFilterCourse]=useState("all");
+  const [filterContractor,setFilterContractor]=useState("");
+  const [filterStatus,setFilterStatus]=useState("all");
+  const [expandedCards,setExpandedCards]=useState({});
+  const [collapsedGroups,setCollapsedGroups]=useState({});
+
+  const allData=useMemo(()=>{
+    const seen=new Set();
+    return RAW.filter(c=>{
+      if(!c.bio||c.bio.trim().length<3)return false;
+      const k=c.email.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;
+    }).map(c=>({...c,specialties:extractSpecialty(c.bio),goodQA:isGoodQA(c.qa)}));
+  },[]);
+
+  function runAnalysis(){
+    const parsed=parseCourses(courseText);
+    if(!parsed.length){alert("Please enter at least one course or subject.");return;}
+    const seen=new Set();const primary=[],backup=[];
+    allData.forEach(c=>{
+      const key=c.email.toLowerCase();if(seen.has(key)||c.flagged)return;
+      const matched=parsed.filter(course=>courseMatches(course,c.specialties));
+      if(matched.length===0)return;seen.add(key);
+      if(!c.cms&&(!c.active||isGoodQA(c.qa)))primary.push({...c,matched});
+      else if(c.cms&&(!c.active||isGoodQA(c.qa)))backup.push({...c,matched});
+    });
+    primary.sort((a,b)=>b.matched.length-a.matched.length||(b.goodQA?1:0)-(a.goodQA?1:0));
+    backup.sort((a,b)=>b.matched.length-a.matched.length||(b.goodQA?1:0)-(a.goodQA?1:0));
+    setResult({primary,backup,courses:parsed});
+    setActiveView("courses");setFilterType("all");setFilterCourse("all");setFilterContractor("");setFilterStatus("all");
+    setExpandedCards({});setCollapsedGroups({});
+  }
+
+  const topFit=useMemo(()=>{
+    if(!result)return{};
+    const map={};
+    result.courses.forEach(course=>{
+      map[course]=[...result.primary,...result.backup]
+        .map(c=>({email:c.email,score:scoreFit(course,c)})).filter(x=>x.score>0)
+        .sort((a,b)=>b.score-a.score).slice(0,2).map(x=>x.email);
+    });
+    return map;
+  },[result]);
+
+  const coverage=useMemo(()=>{
+    if(!result)return[];
+    return result.courses.map((course,i)=>{
+      const all=[...result.primary,...result.backup].filter(c=>courseMatches(course,c.specialties));
+      const top2=topFit[course]||[];
+      return{course,pal:PALETTE[i%PALETTE.length],total:all.length,
+        primaryCount:result.primary.filter(c=>courseMatches(course,c.specialties)).length,
+        backupCount:result.backup.filter(c=>courseMatches(course,c.specialties)).length,
+        status:getCoverageStatus(all.length),
+        topNames:all.filter(c=>top2.includes(c.email)).map(c=>c.name),index:i};
+    });
+  },[result,topFit]);
+
+  const shown=useMemo(()=>{
+    if(!result)return[];
+    let pool=filterType==="primary"?result.primary:filterType==="backup"?result.backup:[...result.primary,...result.backup];
+    if(filterCourse!=="all")pool=pool.filter(c=>courseMatches(filterCourse,c.specialties));
+    if(filterContractor.trim())pool=pool.filter(c=>c.name.toLowerCase().includes(filterContractor.toLowerCase())||c.bio.toLowerCase().includes(filterContractor.toLowerCase()));
+    return pool;
+  },[result,filterType,filterCourse,filterContractor]);
+
+  const courseGroups=useMemo(()=>{
+    if(!result)return[];
+    const list=filterCourse==="all"?result.courses:[filterCourse];
+    return list.map(course=>{
+      const idx=result.courses.indexOf(course);
+      const contractors=shown.filter(c=>courseMatches(course,c.specialties));
+      const allForCourse=[...result.primary,...result.backup].filter(c=>courseMatches(course,c.specialties));
+      return{course,pal:PALETTE[idx%PALETTE.length],contractors,totalCount:allForCourse.length,status:getCoverageStatus(allForCourse.length)};
+    });
+  },[result,shown,filterCourse]);
+
+  const flaggedCourses=useMemo(()=>coverage.filter(c=>c.status==="critical"||c.status==="low"),[coverage]);
+  const reportFiltered=useMemo(()=>filterStatus==="all"?coverage:coverage.filter(c=>c.status===filterStatus),[coverage,filterStatus]);
+
+  function toggleCard(id){setExpandedCards(p=>({...p,[id]:!p[id]}));}
+  function toggleGroup(g){setCollapsedGroups(p=>({...p,[g]:!p[g]}));}
+
+  function ContractorRow({c,pal,groupKey}){
+    const id=groupKey+"::"+c.email;const open=!!expandedCards[id];
+    const isPrimary=result.primary.some(x=>x.email===c.email);
+    const isFit=(topFit[groupKey]||[]).includes(c.email);
+    return(
+      <div style={{borderRadius:8,background:"#fff",border:`0.5px solid ${isFit?pal.border:"#d3d1c7"}`,marginBottom:6,overflow:"hidden",boxShadow:isFit?`0 0 0 1px ${pal.border}40`:undefined}}>
+        <div onClick={()=>toggleCard(id)} style={{padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:4,minHeight:36,borderRadius:2,background:isFit?pal.border:"#d3d1c7",flexShrink:0,alignSelf:"stretch"}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:2}}>
+              <span style={{fontWeight:600,fontSize:13,color:"#1a1a18"}}>{c.name}</span>
+              {isFit&&<span style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,padding:"2px 9px",borderRadius:20,background:pal.border,color:"#fff",fontWeight:700}}>★ Most Fit</span>}
+              <span style={{fontSize:10,padding:"2px 7px",borderRadius:3,background:isPrimary?GL:BL,color:isPrimary?G:B,fontWeight:600}}>{isPrimary?"Primary":"Back-up"}</span>
+              {c.active&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:3,background:AL,color:AM,fontWeight:600}}>Active</span>}
+              {c.goodQA&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:3,background:GL,color:G,fontWeight:600}}>Good QA</span>}
+            </div>
+            <div style={{fontSize:11,color:"#888780",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.specialties.slice(0,5).join(" · ")||"—"}</div>
+          </div>
+          <span style={{fontSize:11,color:"#888780",flexShrink:0}}>{open?"▲":"▼"}</span>
+        </div>
+        {open&&(
+          <div style={{borderTop:`0.5px solid ${pal.border}40`,padding:"10px 14px 10px 26px",background:"#f5f5f3"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 16px",fontSize:12,marginBottom:6,color:"#1a1a18"}}>
+              <div><span style={{color:"#888780"}}>Email: </span>{c.email}</div>
+              <div><span style={{color:"#888780"}}>Residency: </span>{c.residency||"—"}</div>
+              <div><span style={{color:"#888780"}}>Wage: </span>{c.wage||"—"}</div>
+            </div>
+            {c.active&&<div style={{fontSize:12,marginBottom:4,color:"#1a1a18"}}><span style={{color:"#888780"}}>Active: </span>{c.active}</div>}
+            {c.bio&&<div style={{fontSize:12,marginBottom:4,lineHeight:1.6,color:"#1a1a18"}}><span style={{color:"#888780"}}>Bio: </span>{c.bio}</div>}
+            {c.qa&&<div style={{fontSize:12,padding:"7px 10px",background:"#fff",borderRadius:6,border:"0.5px solid #d3d1c7",color:"#1a1a18"}}><span style={{color:"#888780"}}>QA: </span>{c.qa}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const card={background:"#fff",borderRadius:10,border:"0.5px solid #d3d1c7",padding:"13px 15px"};
+  const btn=(active,color="#1a1a18")=>({fontSize:13,padding:"8px 16px",borderRadius:7,border:`0.5px solid ${active?"#1a1a18":"#d3d1c7"}`,background:active?"#fff":"#f5f5f3",color,cursor:"pointer",fontWeight:active?600:400});
+
+  return(
+    <div style={{fontFamily:"-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",color:"#1a1a18"}}>
+      {/* HEADER */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:8}}>
+        <div>
+          <h1 style={{fontSize:22,fontWeight:600,margin:"0 0 3px",letterSpacing:"-0.3px"}}>Contractor Analysis & Strategy</h1>
+          <p style={{fontSize:12,color:"#888780",margin:0}}>{allData.length} contractors loaded · College Saver Master Contractor Tracking Sheet · Last refreshed: March 14, 2026</p>
+        </div>
+      </div>
+
+      {/* INPUT */}
+      <div style={{...card,marginBottom:14}}>
+        <p style={{fontSize:14,fontWeight:600,margin:"0 0 4px"}}>Courses / subjects needed</p>
+        <p style={{fontSize:12,color:"#888780",margin:"0 0 10px"}}>Enter one per line, or comma-separated. Supports 20+ courses.</p>
+        <textarea value={courseText} onChange={e=>setCourseText(e.target.value)}
+          placeholder={"US History\nOrganic Chemistry\nBusiness Management\nIntroduction to Psychology\nCalculus I\n..."}
+          rows={8} style={{width:"100%",fontSize:13,padding:"9px 11px",borderRadius:7,border:"0.5px solid #b4b2a9",background:"#f5f5f3",color:"#1a1a18",resize:"vertical",lineHeight:1.6,outline:"none"}}/>
+        {courseText.trim()&&<p style={{fontSize:12,color:"#888780",margin:"5px 0 0"}}>{parseCourses(courseText).length} course{parseCourses(courseText).length!==1?"s":""} detected</p>}
+      </div>
+      <div style={{marginBottom:20}}>
+        <button onClick={runAnalysis} style={{fontSize:14,padding:"10px 26px",borderRadius:8,border:"none",background:G,color:"#fff",cursor:"pointer",fontWeight:600,letterSpacing:"0.01em"}}>
+          Run analysis
+        </button>
+      </div>
+
+      {result&&(<>
+        {flaggedCourses.length>0&&(
+          <div style={{marginBottom:14,padding:"12px 14px",borderRadius:10,background:RL,border:"1px solid #f09595"}}>
+            <p style={{fontSize:13,fontWeight:600,color:R,margin:"0 0 7px"}}>⚠ {flaggedCourses.length} course{flaggedCourses.length!==1?"s":""} need immediate attention</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+              {flaggedCourses.map(({course,total,status})=>(
+                <span key={course} style={{fontSize:12,padding:"3px 10px",borderRadius:5,background:status==="critical"?"#F7C1C1":"#FAC775",color:status==="critical"?R:AM,fontWeight:600,border:`0.5px solid ${status==="critical"?R:AM}`}}>
+                  {course} — {status==="critical"?"no match":"only "+total}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14}}>
+          {[["Courses",result.courses.length,"#1a1a18"],["Primary",result.primary.length,G],["Back-up",result.backup.length,B],["Need Action",flaggedCourses.length,flaggedCourses.length>0?R:"#888780"]].map(([l,v,c])=>(
+            <div key={l} style={{background:"#f5f5f3",borderRadius:8,padding:"10px 13px",border:"0.5px solid #d3d1c7"}}>
+              <div style={{fontSize:11,color:"#888780",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
+              <div style={{fontSize:24,fontWeight:700,color:c}}>{v}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:"flex",gap:0,marginBottom:16,borderRadius:8,overflow:"hidden",border:"0.5px solid #d3d1c7",width:"fit-content"}}>
+          {[["courses","Contractor View"],["report","Coverage Report"]].map(([key,label])=>(
+            <button key={key} onClick={()=>setActiveView(key)} style={{fontSize:13,padding:"8px 18px",border:"none",background:activeView===key?"#fff":"#f5f5f3",color:activeView===key?"#1a1a18":"#888780",cursor:"pointer",fontWeight:activeView===key?600:400,borderRight:key==="courses"?"0.5px solid #d3d1c7":"none"}}>
+              {label}{key==="report"&&flaggedCourses.length>0&&<span style={{marginLeft:6,background:R,color:"#fff",fontSize:10,padding:"1px 6px",borderRadius:8,fontWeight:700}}>{flaggedCourses.length}</span>}
+            </button>
+          ))}
+        </div>
+
+        {activeView==="report"&&(
+          <div>
+            <div className="filter-row" style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{fontSize:12,color:"#888780"}}>Filter:</span>
+              {[["all","All"],["critical","No contractors"],["low","Low coverage"],["moderate","Moderate"],["good","Good"]].map(([val,label])=>(
+                <button key={val} onClick={()=>setFilterStatus(val)} style={{fontSize:12,padding:"5px 11px",borderRadius:5,border:`0.5px solid ${filterStatus===val?"#1a1a18":"#d3d1c7"}`,background:filterStatus===val?"#1a1a18":"#f5f5f3",color:filterStatus===val?"#fff":"#1a1a18",cursor:"pointer",fontWeight:filterStatus===val?600:400}}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style={{overflowX:"auto",borderRadius:10,border:"0.5px solid #d3d1c7"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:700}}>
+                <thead>
+                  <tr style={{background:"#f5f5f3"}}>
+                    {["#","Course","Status","Primary","Back-up","Total","★ Most Fit","Action"].map((h,i)=>(
+                      <th key={h} style={{padding:"10px 13px",textAlign:i>2&&i<6?"center":"left",fontWeight:600,fontSize:11,color:"#888780",borderBottom:"1px solid #d3d1c7",whiteSpace:"nowrap",textTransform:"uppercase",letterSpacing:"0.04em"}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportFiltered.map(({course,pal,total,primaryCount,backupCount,status,topNames,index},i)=>{
+                    const cfg=STATUS_CONFIG[status];
+                    return(
+                      <tr key={course} style={{background:i%2===0?"#fff":"#f5f5f3",borderBottom:"0.5px solid #d3d1c7"}}>
+                        <td style={{padding:"10px 13px",color:"#888780",fontSize:12}}>{index+1}</td>
+                        <td style={{padding:"10px 13px"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{width:9,height:9,borderRadius:"50%",background:pal.border,flexShrink:0}}/>
+                            <span style={{fontWeight:600}}>{course}</span>
+                          </div>
+                        </td>
+                        <td style={{padding:"10px 13px"}}>
+                          <span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:cfg.bg,color:cfg.color,fontWeight:600,border:`0.5px solid ${cfg.border}`,whiteSpace:"nowrap"}}>{cfg.label}</span>
+                        </td>
+                        <td style={{padding:"10px 13px",textAlign:"center",fontWeight:700,color:primaryCount===0?R:G}}>{primaryCount}</td>
+                        <td style={{padding:"10px 13px",textAlign:"center",fontWeight:700,color:backupCount===0?R:B}}>{backupCount}</td>
+                        <td style={{padding:"10px 13px",textAlign:"center",fontWeight:800,color:total===0?R:total<=LOW?AM:G,fontSize:15}}>{total}</td>
+                        <td style={{padding:"10px 13px"}}>
+                          {topNames.length>0
+                            ?<div style={{display:"flex",flexDirection:"column",gap:3}}>
+                                {topNames.map(n=><span key={n} style={{fontSize:11,padding:"2px 9px",borderRadius:10,background:pal.border,color:"#fff",fontWeight:700,whiteSpace:"nowrap",width:"fit-content"}}>★ {n}</span>)}
+                              </div>
+                            :<span style={{color:"#888780"}}>—</span>
+                          }
+                        </td>
+                        <td style={{padding:"10px 13px"}}>
+                          <span style={{fontSize:12,color:cfg.color,fontWeight:status==="critical"||status==="low"?600:400}}>{cfg.action}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {reportFiltered.length===0&&<p style={{fontSize:13,color:"#888780",padding:"14px"}}>No courses match the selected filter.</p>}
+            </div>
+          </div>
+        )}
+
+        {activeView==="courses"&&(<>
+          <div style={{...card,marginBottom:14}}>
+            <p style={{fontSize:11,fontWeight:600,margin:"0 0 9px",color:"#888780",textTransform:"uppercase",letterSpacing:"0.05em"}}>Filters</p>
+            <div className="filter-row" style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+              <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"0.5px solid #d3d1c7"}}>
+                {[["all","All"],["primary","Primary"],["backup","Back-up"]].map(([val,label])=>(
+                  <button key={val} onClick={()=>setFilterType(val)} style={{fontSize:12,padding:"6px 12px",border:"none",background:filterType===val?"#fff":"#f5f5f3",color:filterType===val?"#1a1a18":"#888780",cursor:"pointer",fontWeight:filterType===val?600:400,borderRight:val!=="backup"?"0.5px solid #d3d1c7":"none"}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <select value={filterCourse} onChange={e=>setFilterCourse(e.target.value)} style={{fontSize:12,padding:"6px 10px",borderRadius:7,border:"0.5px solid #d3d1c7",background:"#f5f5f3",color:"#1a1a18",cursor:"pointer"}}>
+                <option value="all">All courses</option>
+                {result.courses.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              <input value={filterContractor} onChange={e=>setFilterContractor(e.target.value)} placeholder="Search contractor or keyword…"
+                style={{fontSize:12,padding:"6px 11px",borderRadius:7,border:"0.5px solid #d3d1c7",background:"#f5f5f3",color:"#1a1a18",outline:"none",flex:1,minWidth:150}}/>
+              {(filterType!=="all"||filterCourse!=="all"||filterContractor)&&(
+                <button onClick={()=>{setFilterType("all");setFilterCourse("all");setFilterContractor("");}} style={{fontSize:12,padding:"6px 11px",borderRadius:7,border:"0.5px solid #d3d1c7",background:"#f5f5f3",color:"#888780",cursor:"pointer"}}>Clear</button>
+              )}
+            </div>
+            <p style={{fontSize:11,color:"#888780",margin:"7px 0 0"}}>{shown.length} contractor{shown.length!==1?"s":""} shown</p>
+          </div>
+
+          {courseGroups.map(({course,pal,contractors,totalCount,status})=>{
+            const collapsed=!!collapsedGroups[course];
+            const cfg=STATUS_CONFIG[status];
+            if(contractors.length===0&&filterContractor)return null;
+            const sorted=[...contractors].sort((a,b)=>((topFit[course]||[]).includes(b.email)?1:0)-((topFit[course]||[]).includes(a.email)?1:0));
+            return(
+              <div key={course} style={{marginBottom:14}}>
+                <div onClick={()=>toggleGroup(course)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:9,marginBottom:collapsed?0:9,background:pal.bg,border:`2px solid ${pal.border}`,cursor:"pointer"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <div style={{width:10,height:10,borderRadius:"50%",background:pal.border,flexShrink:0}}/>
+                    <span style={{fontWeight:700,fontSize:15,color:pal.text}}>{course}</span>
+                    <span style={{fontSize:12,color:pal.text,opacity:0.7}}>{contractors.length} shown · {totalCount} total</span>
+                    <span style={{fontSize:11,padding:"2px 9px",borderRadius:4,background:cfg.bg,color:cfg.color,fontWeight:600,border:`0.5px solid ${cfg.border}`}}>{cfg.label}</span>
+                  </div>
+                  <span style={{fontSize:13,color:pal.text}}>{collapsed?"▼":"▲"}</span>
+                </div>
+                {!collapsed&&contractors.length===0&&(
+                  <div style={{padding:"11px 14px",borderRadius:8,background:RL,border:"0.5px solid #f09595",fontSize:13,color:R,marginBottom:4}}>
+                    No contractors match this course with the current filters.
+                  </div>
+                )}
+                {!collapsed&&sorted.map(c=><ContractorRow key={c.email} c={c} pal={pal} groupKey={course}/>)}
+              </div>
+            );
+          })}
+        </>)}
+      </>)}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
